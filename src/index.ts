@@ -7,8 +7,25 @@ import bodyParser from "body-parser";
 const app =express();
 
 const PORT = process.env.PORT || 3000;
+const session = require('express-session');
+const Keycloak = require('keycloak-connect');
+const memoryStore = new session.MemoryStore();
+const kcConfig = {
+    clientId: 'flyware-client',
+    bearerOnly: true,
+    serverUrl: 'http://localhost:8080',
+    realm: 'Flyware-Realm',
+    publicClient: true
+};
+const keycloak = new Keycloak({ store: memoryStore }, kcConfig);
 const eurekaHelper = require('./eureka-helper');
-
+app.use(session({
+    secret: 'my-secret',
+    resave: false,
+    saveUninitialized: true,
+    store: memoryStore,
+}));
+app.use(keycloak.middleware());
 app.listen(PORT, () => {
   console.log("transport-server on 3000");
 })
@@ -29,14 +46,27 @@ mongoose.connect(uri,(err)=>{
 
 
 
+app.get("/transports", keycloak.protect('realm:admin'), (req, resp) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.size as string) || 10;
+    Transport.paginate("", { page: page, limit: pageSize }, (err, result) => {
+        if (err) {
+          resp.status(500).send(err);
+        } else {
+          resp.send(result);
+        }
+      });
+    
+    });
 
-app.get("/transports",(req:Request,resp:Response)=>{
-  Transport.find((err,transports)=>{
-     if(err) resp.status(500).send(err);
-     else resp.send(transports);
+
+// app.get("/transports",(req:Request,resp:Response)=>{
+//   Transport.find((err,transports)=>{
+//      if(err) resp.status(500).send(err);
+//      else resp.send(transports);
   
-});
-});
+// });
+// });
 
 
 

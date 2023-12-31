@@ -23,6 +23,9 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
-    "eureka-js-client": "^4.5.0"
+    "eureka-js-client": "^4.5.0",
+    "express-session": "^1.17.3",
+    "keycloak-connect": "^23.0.3",
+    "keycloak-js": "^23.0.3"
   }
 }

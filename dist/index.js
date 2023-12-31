@@ -9,12 +9,25 @@ const transport_model_1 = __importDefault(require("./transport.model"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
-const eurekaHelper = require('./eureka-helper');
-
 const session = require('express-session');
 const Keycloak = require('keycloak-connect');
 const memoryStore = new session.MemoryStore();
-
+const kcConfig = {
+    clientId: 'flyware-client',
+    bearerOnly: true,
+    serverUrl: 'http://localhost:8080',
+    realm: 'Flyware-Realm',
+    publicClient: true
+};
+const keycloak = new Keycloak({ store: memoryStore }, kcConfig);
+const eurekaHelper = require('./eureka-helper');
+app.use(session({
+    secret: 'my-secret',
+    resave: false,
+    saveUninitialized: true,
+    store: memoryStore,
+}));
+app.use(keycloak.middleware());
 app.listen(PORT, () => {
     console.log("transport-server on 3000");
 });
@@ -27,14 +40,24 @@ mongoose_1.default.connect(uri, (err) => {
     else
         console.log("Mongo Database connected successfuly");
 });
-app.get("/transports", (req, resp) => {
-    transport_model_1.default.find((err, transports) => {
-        if (err)
+app.get("/transports", keycloak.protect('realm:admin'), (req, resp) => {
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.size) || 10;
+    transport_model_1.default.paginate("", { page: page, limit: pageSize }, (err, result) => {
+        if (err) {
             resp.status(500).send(err);
-        else
-            resp.send(transports);
+        }
+        else {
+            resp.send(result);
+        }
     });
 });
+// app.get("/transports",(req:Request,resp:Response)=>{
+//   Transport.find((err,transports)=>{
+//      if(err) resp.status(500).send(err);
+//      else resp.send(transports);
+// });
+// });
 app.get("/transports/:id", (req, resp) => {
     transport_model_1.default.findById(req.params.id, (err, transport) => {
         if (err)
