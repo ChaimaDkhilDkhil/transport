@@ -10,6 +10,11 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 const eurekaHelper = require('./eureka-helper');
+
+const session = require('express-session');
+const Keycloak = require('keycloak-connect');
+const memoryStore = new session.MemoryStore();
+
 app.listen(PORT, () => {
     console.log("transport-server on 3000");
 });
@@ -76,7 +81,7 @@ app.post("/transports", (req, resp) => {
     });
 });
 app.get("/", (req, resp) => {
-    resp.send("MCHA YACINE MCHA");
+    resp.send("yyyyyyy");
 });
 app.listen(8085, () => {
     console.log("server srtared");
